@@ -127,3 +127,137 @@ g++ -std=c++17 -O2 -o aether.exe main.cpp ^
 Экспериментальный прототип. Не для реальных денег. Используйте на свой риск. Автор не несёт ответственности за потерю средств, данных или времени.
 
 Если хотите помочь — откройте issue, пришлите pull request или просто запустите ноду и напишите, что не работает.
+
+[🇷🇺 Русский](README.md) |
+
+**🇬🇧 English**
+
+# Aether
+
+A coin for the ordinary computer. Hard cap 21,000,000 AETH — after that, only fees. No ASIC races, no pools, no inflation.
+
+> ⚠️ **Prototype.** Network not launched, code not audited, test coins worth nothing. Do not send real money here.
+
+---
+
+## Why
+
+Bitcoin still works, but mining has gone to those with farms and cheap electricity. Aether takes a different bet: a block should be mineable on a home CPU, issuance rules should not be inflatable by vote, and protocol code should not silently change every season.
+
+Motto: **"Believe and Participate."**
+
+---
+
+## Rules that don't move
+
+| Parameter | Value |
+|---|---|
+| Supply cap | **21,000,000 AETH**, forever |
+| Unit | 1 AETH = 100,000,000 base units |
+| Block reward | 50 AETH, halving every 210,000 blocks |
+| Block time target | 10 minutes |
+| Early years | Proof of Work |
+| After first halving | PoS layer added. Validators live on fees, block reward stays with miner |
+| Fee | per byte, not a fixed "dollar price" |
+| Governance | 85% threshold only for emergency kill-switch, not for issuance |
+
+Founder reserve and ecosystem fund sit **inside** the cap, not on top. Founder share is 1%. Ecosystem fund — 840,000 AETH, for development, not for loans or fractional reserve. Unclaimed amounts return to the fund by rule.
+
+Founder immunity is active **until first halving** and gives no mining advantage: same difficulty, same reward as everyone else.
+
+---
+
+## How it's built
+
+Custom client in **C++17**, single `main.cpp`, no OpenSSL, Boost or libsecp256k1.
+
+- UTXO accounting, as in Bitcoin: an output is spent once.
+- **secp256k1** signature, written in-house. Nonce per **RFC 6979**, not from system RNG.
+- Block: header, transaction tree, block reward, mempool.
+- Network: custom messages `CHAIN`, `REQBLK`, `BLOCK`. Node validates genesis and rejects foreign chains.
+- Address starts with `AETH_`.
+
+**DOIS** is designed as a quiet filter, not a ban-by-block-share mechanism. Block share over a window is unsuitable: a farm splits addresses and survives while a large honest miner gets kicked. There is no such ban in the protocol. Defense against farms and ASIC should come from the work algorithm itself, memory-heavy. Currently a simple proof-of-work is in place for debugging. The permanent algorithm is not enabled yet.
+
+**Updates** are not free and not unlimited. After code separation, no more than **18 patches** are allowed, each with its own cooldown. **Constitution of 13 articles** is fixed in the client: supply, halving, vesting, DOIS, patches, 85% threshold, post-halving share, founder immunity, anti-censorship, ecosystem fund, unclaimed funds, patch cooldown, and the constitution itself.
+
+---
+
+## What's missing
+
+- **Global peer discovery.** Currently manual. For an open network, several seed names will ship in the client — not miner addresses.
+- **A work algorithm unusable for ASIC and GPUs.**
+- **Hardcoded genesis.** Currently chain is copied as a file; nodes can drift.
+- **Third-party audit** of signatures, chain rollback and fees.
+
+Until these are done — **no public release.**
+
+---
+
+## Build
+
+**Windows**, MinGW, C++17. Single source file: `main.cpp`.
+
+### Dev-C++
+
+Open `Makefile.win`, press **F12** (Compile & Run).
+
+### Command line
+
+If `g++` is already in `PATH`:
+
+```bash
+g++ -std=c++17 -O2 -o aether.exe main.cpp ^
+    -lws2_32 -lcrypt32 -ladvapi32 -luser32 -lkernel32 ^
+    -static -static-libgcc -static-libstdc++
+```
+
+For a **static** `.exe` (no DLLs needed):
+
+```bash
+g++ -std=c++17 -O2 -o aether.exe main.cpp ^
+    -static -static-libwinpthread ^
+    -lws2_32 -lcrypt32 -ladvapi32 -luser32 -lkernel32 ^
+    -static-libgcc -static-libstdc++
+```
+
+### Run
+
+```bash
+./aether.exe
+```
+
+On first run, a directory `aether_chain/` is created — chain, keys, settings. **Do not delete it** — your coins and seed phrase live there.
+
+---
+
+## Status
+
+| Component | Status |
+|---|---|
+| Crypto (SHA-256, AES, ECDSA, BIP39) | ✅ |
+| secp256k1 + RFC 6979 signing | ✅ |
+| UTXO accounting | ✅ |
+| Blocks, mempool, reward | ✅ |
+| P2P (`CHAIN`, `REQBLK`, `BLOCK`) | ✅ |
+| Sync (IBD, reorg by work) | ✅ |
+| Proof-of-Work (Argon2d, 1 GiB) | ⚠️ Debug only |
+| DOIS journal | ⚠️ Log only, not consensus |
+| PoS after first halving | ⏳ Spec |
+| Hardcoded genesis | ❌ No |
+| Peer discovery | ❌ No (manual) |
+| External audit | ❌ No |
+
+---
+
+## License
+
+**MIT** — see [`LICENSE`](LICENSE).
+
+---
+
+## Disclaimer
+
+Experimental prototype. Not for real money. Use at your own risk. Author is not responsible for loss of funds, data, or time.
+
+If you want to help — open an issue, send a pull request, or just run a node and report what's broken.
